@@ -1,0 +1,16 @@
+{# Browser-frame illustration used on the landing page. The caller() content is purely visual. #}
+{% macro browser(url, label) %}
+<div role="img" aria-label="{{ label }}" class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
+  <div class="flex items-center gap-1.5 border-b border-slate-200 bg-slate-100 px-3 py-2" aria-hidden="true">
+    <span class="h-2.5 w-2.5 rounded-full bg-slate-300"></span>
+    <span class="h-2.5 w-2.5 rounded-full bg-slate-300"></span>
+    <span class="h-2.5 w-2.5 rounded-full bg-slate-300"></span>
+    <span class="ml-2 min-w-0 flex-1 truncate rounded-md bg-white px-3 py-0.5 text-xs text-slate-600">{{ url }}</span>
+  </div>
+  <div aria-hidden="true">{{ caller() }}</div>
+</div>
+{% endmacro %}
+
+{% macro image_block(classes="") %}
+<div class="flex items-center justify-center bg-slate-200 text-slate-400 {{ classes }}"><i class="fa-regular fa-image"></i></div>
+{% endmacro %}

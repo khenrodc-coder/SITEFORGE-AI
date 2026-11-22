@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% macro nav_link(href, icon, label, key) %}
+<a href="{{ href }}" {% if active_page == key %}aria-current="page"{% endif %}
+   class="flex min-h-[44px] cursor-pointer items-center gap-3 rounded-xl px-3 text-sm font-medium transition-colors duration-200
+          {% if active_page == key %}bg-brand-600 text-white{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %}">
+  <i class="fa-solid {{ icon }} w-5 text-center" aria-hidden="true"></i>
+  <span>{{ label }}</span>
+</a>
+{% endmacro %}
+
+{% block body %}
+<div class="lg:flex">
+
+  <div id="sidebar-overlay" data-sidebar-close class="fixed inset-0 z-30 hidden bg-slate-900/50 lg:hidden"></div>
+
+  <aside id="app-sidebar" class="app-sidebar flex flex-col bg-sidebar text-slate-300" aria-label="Application">
+    <div class="flex items-center justify-between px-5 py-5">
+      <a href="{{ url_for('main.index') }}" class="flex min-h-[44px] cursor-pointer items-center gap-3">
+        <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white" aria-hidden="true">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+        </span>
+        <span class="font-display text-lg font-semibold text-white">{{ app_name }}</span>
+      </a>
+      <button type="button" data-sidebar-close
+              class="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl text-slate-300 hover:bg-white/10 lg:hidden">
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        <span class="sr-only">Close menu</span>
+      </button>
+    </div>
+
+    <nav class="flex-1 space-y-1 px-3" aria-label="Dashboard">
+      {{ nav_link(url_for('main.dashboard'), 'fa-table-columns', 'Dashboard', 'dashboard') }}
+      {{ nav_link(url_for('main.builder'), 'fa-plus', 'New project', 'builder') }}
+      {{ nav_link(url_for('main.dashboard') ~ '#projects', 'fa-folder-open', 'Recent projects', 'projects') }}
+      {{ nav_link(url_for('main.dashboard') ~ '#templates', 'fa-layer-group', 'Templates', 'templates') }}
+      {{ nav_link(url_for('main.dashboard') ~ '#history', 'fa-clock-rotate-left', 'Generation history', 'history') }}
+    </nav>
+
+    <div class="border-t border-white/10 px-3 py-4">
+      {{ nav_link(url_for('main.index'), 'fa-arrow-left', 'Back to website', 'home') }}
+    </div>
+  </aside>
+
+  <div class="min-w-0 flex-1">
+    <header class="sticky top-0 z-20 flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-2 lg:hidden">
+      <button type="button" data-sidebar-toggle aria-expanded="false" aria-controls="app-sidebar"
+              class="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50">
+        <i class="fa-solid fa-bars" aria-hidden="true"></i>
+        <span class="sr-only">Open menu</span>
+      </button>
+      <span class="font-display text-lg font-semibold">{{ app_name }}</span>
+    </header>
+
+    <main id="main" class="px-4 py-8 sm:px-8 lg:px-12 lg:py-10">
+      <div class="mx-auto max-w-6xl">
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+  </div>
+
+</div>
+{% endblock %}

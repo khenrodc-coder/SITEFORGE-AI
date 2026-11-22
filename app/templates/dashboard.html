@@ -1,0 +1,125 @@
+{% extends "app_shell.html" %}
+{% block title %}Dashboard | SiteForge AI{% endblock %}
+
+{% macro empty_state(icon, title, text) %}
+<div class="flex flex-col items-center rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center">
+  <span class="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-600" aria-hidden="true">
+    <i class="fa-solid {{ icon }}"></i>
+  </span>
+  <h3 class="mt-4 font-display text-lg font-semibold">{{ title }}</h3>
+  <p class="mt-1 max-w-md text-slate-600">{{ text }}</p>
+  {{ caller() if caller else "" }}
+</div>
+{% endmacro %}
+
+{% block content %}
+<div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+  <div>
+    <h1 class="font-display text-3xl font-bold tracking-tight">Dashboard</h1>
+    <p class="mt-1 text-slate-600">Create a website from a description, or start from a template.</p>
+  </div>
+  <a href="{{ url_for('main.builder') }}"
+     class="inline-flex min-h-[48px] cursor-pointer items-center justify-center gap-2 rounded-xl bg-brand-600 px-6 text-base font-medium text-white transition-colors duration-200 hover:bg-brand-700">
+    <i class="fa-solid fa-plus" aria-hidden="true"></i> New project
+  </a>
+</div>
+
+<!-- Recent projects -->
+<section id="projects" class="scroll-mt-20 mt-10" aria-labelledby="projects-title">
+  <h2 id="projects-title" class="font-display text-xl font-semibold">Recent projects</h2>
+  <p class="mt-1 text-sm text-slate-600">Each saved project can be opened, renamed, duplicated, or deleted.</p>
+  <div class="mt-4">
+    {% call empty_state("fa-folder-open", "No projects yet", "Projects you save will appear here, newest first.") %}
+      <a href="{{ url_for('main.builder') }}"
+         class="mt-5 inline-flex min-h-[44px] cursor-pointer items-center gap-2 rounded-xl bg-brand-600 px-5 text-sm font-medium text-white transition-colors duration-200 hover:bg-brand-700">
+        <i class="fa-solid fa-plus" aria-hidden="true"></i> Create your first project
+      </a>
+    {% endcall %}
+  </div>
+</section>
+
+<!-- Templates -->
+<section id="templates" class="scroll-mt-20 mt-12" aria-labelledby="templates-title">
+  <h2 id="templates-title" class="font-display text-xl font-semibold">Website templates</h2>
+  <p class="mt-1 text-sm text-slate-600">Pick a type of website to start with. You can change everything afterward.</p>
+  <ul class="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    {% for category in categories %}
+    <li>
+      <a href="{{ url_for('main.builder', category=category.id) }}"
+         class="group flex h-full cursor-pointer flex-col rounded-2xl border border-slate-200 bg-white p-5 transition-shadow duration-200 hover:border-brand-500 hover:shadow-md">
+        <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600" aria-hidden="true">
+          <i class="fa-solid {{ category.icon }}"></i>
+        </span>
+        <h3 class="mt-4 font-display font-semibold">{{ category.name }}</h3>
+        <p class="mt-1 text-sm text-slate-600">{{ category.description }}</p>
+        <p class="mt-3 text-sm text-slate-600"><span class="font-medium text-slate-800">Sections:</span> {{ category.sections | join(", ") }}</p>
+        <span class="mt-auto pt-4 text-sm font-medium text-brand-600 group-hover:text-brand-700">Start with this type</span>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+
+<!-- Generation history -->
+<section id="history" class="scroll-mt-20 mt-12" aria-labelledby="history-title">
+  <h2 id="history-title" class="font-display text-xl font-semibold">Generation history</h2>
+  <p class="mt-1 text-sm text-slate-600">Every website you generate is listed here with its description and date.</p>
+  <div class="mt-4">
+    {% call empty_state("fa-clock-rotate-left", "Nothing generated yet", "When you generate a website, you can come back to earlier versions from this list.") %}{% endcall %}
+  </div>
+</section>
+
+<!-- AI engine -->
+<section class="mt-12 rounded-2xl border border-slate-200 bg-white p-6" aria-labelledby="ai-title">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <h2 id="ai-title" class="font-display text-xl font-semibold">AI engine</h2>
+    <span id="ai-badge" class="status-badge status-checking" role="status" aria-live="polite">
+      <i class="fa-solid fa-circle-notch fa-spin" aria-hidden="true"></i>
+      <span id="ai-text">Checking...</span>
+    </span>
+  </div>
+  <dl class="mt-4 grid gap-4 sm:grid-cols-2">
+    <div>
+      <dt class="text-sm text-slate-600">Model</dt>
+      <dd id="ai-model" class="font-medium">-</dd>
+    </div>
+    <div>
+      <dt class="text-sm text-slate-600">Details</dt>
+      <dd id="ai-message" class="font-medium">-</dd>
+    </div>
+  </dl>
+  <button id="ai-refresh" type="button"
+          class="mt-5 inline-flex min-h-[44px] cursor-pointer items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-sm font-medium text-slate-800 transition-colors duration-200 hover:bg-slate-50">
+    <i class="fa-solid fa-rotate" aria-hidden="true"></i> Check again
+  </button>
+</section>
+
+<!-- Server status (carried over from setup) -->
+<section class="mt-12 rounded-2xl border border-slate-200 bg-white p-6" aria-labelledby="status-title">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <h2 id="status-title" class="font-display text-xl font-semibold">Server status</h2>
+    <span id="status-badge" class="status-badge status-checking" role="status" aria-live="polite">
+      <i class="fa-solid fa-circle-notch fa-spin" aria-hidden="true"></i>
+      <span id="status-text">Checking...</span>
+    </span>
+  </div>
+  <dl class="mt-4 grid gap-4 sm:grid-cols-3">
+    <div>
+      <dt class="text-sm text-slate-600">Application</dt>
+      <dd id="status-app" class="font-medium">-</dd>
+    </div>
+    <div>
+      <dt class="text-sm text-slate-600">Version</dt>
+      <dd id="status-version" class="font-medium">-</dd>
+    </div>
+    <div>
+      <dt class="text-sm text-slate-600">Export folder writable</dt>
+      <dd id="status-export" class="font-medium">-</dd>
+    </div>
+  </dl>
+  <button id="status-refresh" type="button"
+          class="mt-5 inline-flex min-h-[44px] cursor-pointer items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-sm font-medium text-slate-800 transition-colors duration-200 hover:bg-slate-50">
+    <i class="fa-solid fa-rotate" aria-hidden="true"></i> Check again
+  </button>
+</section>
+{% endblock %}

@@ -1,0 +1,20 @@
+<footer class="border-t border-slate-200 bg-white">
+  <div class="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-10 sm:px-8 md:flex-row md:items-center md:justify-between">
+    <div class="flex items-center gap-3">
+      <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white" aria-hidden="true">
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+      </span>
+      <div>
+        <p class="font-display font-semibold">{{ app_name }}</p>
+        <p class="text-sm text-slate-600">Describe it. Generate it. Ship it.</p>
+      </div>
+    </div>
+    <nav aria-label="Footer" class="flex flex-wrap gap-x-6 gap-y-1 text-sm">
+      <a href="#features" class="flex min-h-[44px] cursor-pointer items-center text-slate-700 hover:text-brand-600">Features</a>
+      <a href="#examples" class="flex min-h-[44px] cursor-pointer items-center text-slate-700 hover:text-brand-600">Examples</a>
+      <a href="#how-it-works" class="flex min-h-[44px] cursor-pointer items-center text-slate-700 hover:text-brand-600">How it works</a>
+      <a href="{{ url_for('main.dashboard') }}" class="flex min-h-[44px] cursor-pointer items-center text-slate-700 hover:text-brand-600">Dashboard</a>
+    </nav>
+  </div>
+  <p class="border-t border-slate-100 px-4 py-4 text-center text-sm text-slate-600">&copy; {{ current_year }} {{ app_name }}</p>
+</footer>
