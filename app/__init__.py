@@ -3,6 +3,7 @@ from datetime import datetime
 
 from flask import Flask, jsonify, render_template, request
 
+from app.services.job_manager import JobManager
 from config import get_config
 
 
@@ -10,6 +11,8 @@ def create_app(config_name=None):
     """Build and configure the Flask application."""
     app = Flask(__name__)
     app.config.from_object(get_config(config_name))
+
+    app.extensions["job_manager"] = JobManager()
 
     # Make sure the export folder exists.
     app.config["GENERATED_WEBSITES_DIR"].mkdir(parents=True, exist_ok=True)

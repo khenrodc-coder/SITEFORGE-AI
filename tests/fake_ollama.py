@@ -15,6 +15,7 @@ class FakeOllama:
         })
         self.chat_status = 200
         self.chat_body_override = None   # send this raw text instead of the normal body
+        self.responder = None            # function(request_body) -> text, overrides chat_content
         self.delay = 0
         self.requests = []
 
@@ -54,7 +55,8 @@ class FakeOllama:
                 elif owner.chat_body_override is not None:
                     self._send(200, owner.chat_body_override.encode())
                 else:
-                    self._send(200, {"message": {"role": "assistant", "content": owner.chat_content}, "done": True})
+                    content = owner.responder(body) if owner.responder else owner.chat_content
+                    self._send(200, {"message": {"role": "assistant", "content": content}, "done": True})
 
         self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
         self.server.daemon_threads = True

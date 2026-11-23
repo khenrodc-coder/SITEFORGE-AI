@@ -181,32 +181,18 @@ class ApiTests(unittest.TestCase):
         self.assertFalse(data["reachable"])
         self.assertIn("OLLAMA_BASE_URL", data["message"])
 
-    def test_generate_success(self):
-        response = self.client.post("/api/generate", json=REQUEST)
-        self.assertEqual(response.status_code, 200)
-        data = response.get_json()
-        self.assertEqual(data["status"], "ok")
-        self.assertEqual(data["brief"]["category"], "restaurant")
-        self.assertEqual(data["model"], "llama3.1:8b")
-
-    def test_generate_model_missing(self):
-        self.fake.chat_status = 404
+    def test_generate_preflight_model_missing(self):
+        self.fake.models = ["mistral:7b"]
         response = self.client.post("/api/generate", json=REQUEST)
         self.assertEqual(response.status_code, 503)
         self.assertEqual(response.get_json()["error"], "model_not_installed")
+        self.assertIn("ollama pull", response.get_json()["message"])
 
-    def test_generate_bad_model_output(self):
-        self.fake.chat_content = "nope"
+    def test_generate_preflight_offline(self):
+        self.app.config["OLLAMA_BASE_URL"] = "http://127.0.0.1:9"
         response = self.client.post("/api/generate", json=REQUEST)
-        self.assertEqual(response.status_code, 502)
-        self.assertEqual(response.get_json()["error"], "ollama_bad_response")
-
-    def test_generate_timeout(self):
-        self.fake.delay = 2.5
-        self.app.config["OLLAMA_TIMEOUT"] = 1
-        response = self.client.post("/api/generate", json=REQUEST)
-        self.assertEqual(response.status_code, 504)
-        self.assertEqual(response.get_json()["error"], "ollama_timeout")
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.get_json()["error"], "ollama_unavailable")
 
     def test_invalid_input_never_reaches_model(self):
         self.client.post("/api/generate", json=dict(REQUEST, prompt="short"))

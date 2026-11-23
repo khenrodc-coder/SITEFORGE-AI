@@ -1,4 +1,4 @@
-/* SiteForge AI builder page: form handling, loading and error states. */
+/* SiteForge AI builder page: starts a generation job, shows its progress, and displays the result. */
 (function () {
   "use strict";
 
@@ -12,13 +12,20 @@
   var statusLine = document.getElementById("form-status");
   var elapsedEl = document.getElementById("elapsed");
   var errorMessage = document.getElementById("error-message");
+  var progressLabel = document.getElementById("progress-label");
+  var progressBar = document.getElementById("progress-bar");
 
   var minLength = parseInt(promptEl.getAttribute("data-min"), 10);
   var maxLength = parseInt(promptEl.getAttribute("data-max"), 10);
   var FIELDS = ["prompt", "category", "design_style", "color_scheme"];
+  var POLL_MS = 1500;
+  var MAX_POLL_FAILURES = 3;
 
-  var controller = null;
-  var timerId = null;
+  var startController = null;   // cancels the request that starts a job
+  var jobId = null;
+  var pollTimer = null;
+  var pollFailures = 0;
+  var elapsedTimer = null;
 
   /* ---------- helpers ---------- */
   function checkedValue(name) {
@@ -60,29 +67,27 @@
   function setLoading(isLoading) {
     submitButton.disabled = isLoading;
     panel.setAttribute("aria-busy", String(isLoading));
-    window.clearInterval(timerId);
+    window.clearInterval(elapsedTimer);
     if (isLoading) {
       var started = Date.now();
       elapsedEl.textContent = "0";
-      timerId = window.setInterval(function () {
+      progressLabel.textContent = "Starting";
+      progressBar.value = 0;
+      elapsedTimer = window.setInterval(function () {
         elapsedEl.textContent = String(Math.floor((Date.now() - started) / 1000));
       }, 1000);
       showState("loading");
     }
   }
 
+  function stopPolling() {
+    window.clearTimeout(pollTimer);
+    pollTimer = null;
+  }
+
   function showError(message) {
     errorMessage.textContent = message;   // textContent keeps server text safe
     showState("error");
-  }
-
-  function showBrief(data) {
-    var brief = data.brief || {};
-    document.getElementById("brief-name").textContent = brief.site_name || "";
-    document.getElementById("brief-tagline").textContent = brief.tagline || "";
-    document.getElementById("brief-category").textContent = brief.category_name || "";
-    document.getElementById("brief-model").textContent = data.model || "";
-    showState("success");
   }
 
   function revealPanelOnSmallScreens() {
@@ -91,9 +96,108 @@
     panel.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
   }
 
-  /* ---------- generation ---------- */
+  function fail(message) {
+    stopPolling();
+    setLoading(false);
+    jobId = null;
+    showError(message);
+  }
+
+  /* ---------- result ---------- */
+  function showResult(result) {
+    var config = result.config;
+    var meta = config.meta;
+
+    document.getElementById("brief-name").textContent = meta.site_name;
+    document.getElementById("brief-tagline").textContent = meta.tagline;
+    document.getElementById("brief-category").textContent = meta.category;
+    document.getElementById("brief-model").textContent = result.model || "";
+
+    var list = document.getElementById("result-sections");
+    list.textContent = "";
+    config.sections.forEach(function (section) {
+      var item = document.createElement("li");
+      item.className = "rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-800 ring-1 ring-emerald-200";
+      item.textContent = section.type;
+      list.appendChild(item);
+    });
+
+    var warnings = result.warnings || [];
+    var warningsBox = document.getElementById("result-warnings");
+    var warningsList = document.getElementById("result-warnings-list");
+    warningsList.textContent = "";
+    warnings.forEach(function (warning) {
+      var item = document.createElement("li");
+      item.textContent = warning;
+      warningsList.appendChild(item);
+    });
+    warningsBox.classList.toggle("hidden", warnings.length === 0);
+
+    document.getElementById("result-json").textContent = JSON.stringify(config, null, 2);
+
+    // The preview in Phase 7 listens for this event.
+    document.dispatchEvent(new CustomEvent("siteforge:generated", { detail: result }));
+    showState("success");
+  }
+
+  /* ---------- polling ---------- */
+  function schedulePoll() {
+    pollTimer = window.setTimeout(poll, POLL_MS);
+  }
+
+  function handleSnapshot(snapshot) {
+    var progress = snapshot.progress || {};
+    if (progress.label) { progressLabel.textContent = progress.label + "..."; }
+    if (progress.total) { progressBar.value = Math.round((progress.done / progress.total) * 100); }
+
+    if (snapshot.status === "done") {
+      stopPolling();
+      setLoading(false);
+      jobId = null;
+      showResult(snapshot.result);
+    } else if (snapshot.status === "failed") {
+      fail((snapshot.error && snapshot.error.message) || "Generation failed. Please try again.");
+    } else if (snapshot.status === "cancelled") {
+      stopPolling();
+      setLoading(false);
+      jobId = null;
+      showState("idle");
+      statusLine.textContent = "Generation cancelled.";
+    } else {
+      schedulePoll();
+    }
+  }
+
+  function poll() {
+    if (!jobId) { return; }
+    fetch("/api/generate/" + encodeURIComponent(jobId), { headers: { Accept: "application/json" } })
+      .then(function (response) {
+        return response.json()
+          .catch(function () { return {}; })
+          .then(function (data) { return { ok: response.ok, data: data }; });
+      })
+      .then(function (result) {
+        pollFailures = 0;
+        if (!result.ok) {
+          fail(result.data.message || "The generation was lost. Please try again.");
+          return;
+        }
+        handleSnapshot(result.data);
+      })
+      .catch(function () {
+        pollFailures += 1;
+        if (pollFailures >= MAX_POLL_FAILURES) {
+          fail("Lost contact with the server. Check that it is running, then try again.");
+        } else {
+          schedulePoll();
+        }
+      });
+  }
+
+  /* ---------- start ---------- */
   function generate() {
     clearErrors();
+    stopPolling();
 
     var payload = {
       prompt: promptEl.value,
@@ -114,7 +218,8 @@
       return;
     }
 
-    controller = new AbortController();
+    startController = new AbortController();
+    pollFailures = 0;
     setLoading(true);
     revealPanelOnSmallScreens();
 
@@ -122,7 +227,7 @@
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify(payload),
-      signal: controller.signal
+      signal: startController.signal
     })
       .then(function (response) {
         return response.json()
@@ -130,15 +235,13 @@
           .then(function (data) { return { ok: response.ok, status: response.status, data: data }; });
       })
       .then(function (result) {
-        setLoading(false);
-
-        if (result.ok) {
-          // The preview in Phase 7 listens for this event and displays the website.
-          document.dispatchEvent(new CustomEvent("siteforge:generated", { detail: result.data }));
-          showBrief(result.data);
+        if (result.ok && result.data.job_id) {
+          jobId = result.data.job_id;
+          schedulePoll();
           return;
         }
 
+        setLoading(false);
         if (result.status === 400 && result.data.fields) {
           showState("idle");
           var firstInvalid = null;
@@ -149,7 +252,6 @@
           if (firstInvalid === "prompt") { promptEl.focus(); }
           return;
         }
-
         showError(result.data.message || "Something went wrong. Please try again.");
       })
       .catch(function (error) {
@@ -161,6 +263,21 @@
         }
         showError("Could not reach the server. Check that it is running, then try again.");
       });
+  }
+
+  function cancel() {
+    if (jobId) {
+      var id = jobId;
+      stopPolling();
+      jobId = null;
+      setLoading(false);
+      showState("idle");
+      statusLine.textContent = "Generation cancelled.";
+      fetch("/api/generate/" + encodeURIComponent(id) + "/cancel", { method: "POST" })
+        .catch(function () { /* the job stops on its own at the next step */ });
+    } else if (startController) {
+      startController.abort();
+    }
   }
 
   /* ---------- events ---------- */
@@ -182,9 +299,7 @@
     });
   });
 
-  panel.querySelector('[data-action="cancel"]').addEventListener("click", function () {
-    if (controller) { controller.abort(); }
-  });
+  panel.querySelector('[data-action="cancel"]').addEventListener("click", cancel);
   panel.querySelector('[data-action="retry"]').addEventListener("click", generate);
 
   updateCounter();
