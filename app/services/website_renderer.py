@@ -190,8 +190,11 @@ def _environment():
 
 
 # ---------------------------------------------------------------- main entry point
-def render_website(config, year=None):
+def render_website(config, year=None, preview=False):
     """Return {"files": {path: text}, "html": single_file_text} for a configuration.
+
+    preview=True adds a base address that keeps in-page links working when the
+    page is shown inside the sandboxed preview frame. It only affects "html".
 
     Raises SchemaError when the configuration is not valid.
     """
@@ -231,9 +234,9 @@ def render_website(config, year=None):
     template = _environment().get_template("base.html")
     return {
         "files": {
-            "index.html": template.render(inline=False, **context),
+            "index.html": template.render(inline=False, preview=False, **context),
             "css/styles.css": css,
             "js/main.js": js,
         },
-        "html": template.render(inline=True, **context),
+        "html": template.render(inline=True, preview=preview, **context),
     }

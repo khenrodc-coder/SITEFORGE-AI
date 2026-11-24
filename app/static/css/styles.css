@@ -87,3 +87,99 @@ body { overflow-x: clip; }
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ---------- Website preview ---------- */
+.preview-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  overflow: hidden;
+}
+.preview-stage {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  height: clamp(480px, 78vh, 920px);
+  padding: 1rem;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+.preview-viewport {
+  position: relative;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: #fff;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
+}
+.preview-viewport[data-device="tablet"],
+.preview-viewport[data-device="mobile"] {
+  border-radius: 1.25rem;
+  outline: 8px solid #0f172a;
+}
+.preview-frame {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border: 0;
+  background: #fff;
+  transform-origin: 0 0;
+}
+.preview-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.5rem;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--color-text);
+}
+.preview-overlay[hidden], .preview-overlay.is-hidden { display: none; }
+.preview-card:fullscreen { width: 100%; height: 100%; border: 0; border-radius: 0; }
+.preview-card.is-expanded { position: fixed; inset: 0; z-index: 70; border: 0; border-radius: 0; }
+.preview-card:fullscreen .preview-stage,
+.preview-card.is-expanded .preview-stage { flex: 1; height: auto; min-height: 0; }
+
+.seg-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 40px;
+  padding: 0 0.85rem;
+  border: 0;
+  border-radius: 0.6rem;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.seg-btn:hover { background: #f1f5f9; }
+.seg-btn[aria-pressed="true"] { background: var(--color-primary); color: #fff; }
+.tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.75rem;
+  background: #fff;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.tool-btn:hover { background: #f8fafc; }

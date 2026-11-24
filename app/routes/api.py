@@ -109,8 +109,9 @@ def render():
 
     body = request.get_json(silent=True)
     config = body.get("config") if isinstance(body, dict) else None
+    preview = isinstance(body, dict) and body.get("preview") is True
     try:
-        rendered = render_website(config)
+        rendered = render_website(config, preview=preview)
     except SchemaError as exc:
         return jsonify({"error": "invalid_configuration",
                         "message": "The website data is not valid.",

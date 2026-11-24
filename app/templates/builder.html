@@ -185,7 +185,7 @@
         </button>
         <p id="download-status" class="mt-2 text-sm text-slate-700" role="status"></p>
         <p class="mt-2 text-sm text-slate-700">
-          Open the downloaded file in your browser to see the website. Live preview inside SiteForge comes next.
+          The live preview below shows your website. Download it to open it in any browser.
         </p>
       </div>
     </div>
@@ -203,8 +203,11 @@
   </section>
 
 </div>
+
+{% include "partials/_preview.html" %}
 {% endblock %}
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/builder.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/preview.js') }}" defer></script>
 {% endblock %}
