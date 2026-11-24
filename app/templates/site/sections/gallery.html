@@ -1,0 +1,15 @@
+{% from "_macros.html" import head %}
+{% set d = section.data %}
+<section id="{{ section.id }}" class="section{% if section.alt %} section--alt{% endif %}" aria-labelledby="{{ section.id }}-title">
+  <div class="container">
+    {{ head(section, d.title, d.intro) }}
+    <div class="gallery">
+{% for item in d["items"] %}
+      <figure>
+        {{ placeholder(section.id ~ "-" ~ loop.index, item.image_alt or item.caption) }}
+        <figcaption>{{ item.caption }}</figcaption>
+      </figure>
+{% endfor %}
+    </div>
+  </div>
+</section>

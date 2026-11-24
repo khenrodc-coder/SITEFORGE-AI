@@ -1,0 +1,10 @@
+{% set d = section.data %}
+<section id="{{ section.id }}" class="cta" aria-labelledby="{{ section.id }}-title">
+  <div class="container">
+    <h2 id="{{ section.id }}-title">{{ d.headline }}</h2>
+{% if d.text %}
+    <p>{{ d.text }}</p>
+{% endif %}
+    <a class="btn" href="#{{ d.target }}">{{ d.button_label }}</a>
+  </div>
+</section>

@@ -6,7 +6,9 @@ from flask import Blueprint, current_app, jsonify, request
 from app.services.generation_request import validate_generation_request
 from app.services.job_manager import JobBusyError
 from app.services.ollama_service import OllamaError, client_from_config
+from app.services.site_schema import SchemaError
 from app.services.website_generator import generate_website
+from app.services.website_renderer import render_website
 
 api_bp = Blueprint("api", __name__, url_prefix="/api")
 
@@ -93,3 +95,24 @@ def generate_cancel(job_id):
         return jsonify({"error": "job_not_found", "message": "That generation job no longer exists."}), 404
     job.request_cancel()
     return jsonify(job.snapshot())
+
+
+@api_bp.route("/render", methods=["POST"])
+def render():
+    """Turn a website configuration into website files.
+
+    The configuration is validated first, so only safe, known data is rendered.
+    """
+    if not request.is_json:
+        return jsonify({"error": "unsupported_media_type",
+                        "message": "Send the request as JSON."}), 415
+
+    body = request.get_json(silent=True)
+    config = body.get("config") if isinstance(body, dict) else None
+    try:
+        rendered = render_website(config)
+    except SchemaError as exc:
+        return jsonify({"error": "invalid_configuration",
+                        "message": "The website data is not valid.",
+                        "problems": exc.problems[:10]}), 400
+    return jsonify(rendered)

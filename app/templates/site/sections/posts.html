@@ -1,0 +1,19 @@
+{% from "_macros.html" import head %}
+{% set d = section.data %}
+<section id="{{ section.id }}" class="section posts posts--{{ d.layout }}{% if section.alt %} section--alt{% endif %}" aria-labelledby="{{ section.id }}-title">
+  <div class="container">
+    {{ head(section, d.title, d.intro) }}
+    <ul class="cards">
+{% for post in d["items"] %}
+      <li class="card">
+        <p class="post-meta">
+{% if post.category %}<span class="tag">{{ post.category }}</span>{% endif %}
+{% if post.date %}<span>{{ post.date }}</span>{% endif %}
+        </p>
+        <h3 style="margin-top:.5rem">{{ post.title }}</h3>
+        <p>{{ post.excerpt }}</p>
+      </li>
+{% endfor %}
+    </ul>
+  </div>
+</section>

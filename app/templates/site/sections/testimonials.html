@@ -1,0 +1,20 @@
+{% from "_macros.html" import head %}
+{% set d = section.data %}
+<section id="{{ section.id }}" class="section{% if section.alt %} section--alt{% endif %}" aria-labelledby="{{ section.id }}-title">
+  <div class="container">
+    {{ head(section, d.title, "") }}
+    <div class="cards">
+{% for item in d["items"] %}
+      <figure class="card quote" style="margin:0">
+        <blockquote>&ldquo;{{ item.quote }}&rdquo;</blockquote>
+        <figcaption>
+          <strong>{{ item.name }}</strong>
+{% if item.role %}
+          <span>{{ item.role }}</span>
+{% endif %}
+        </figcaption>
+      </figure>
+{% endfor %}
+    </div>
+  </div>
+</section>

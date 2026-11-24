@@ -178,9 +178,16 @@
         <pre id="result-json" class="max-h-96 overflow-auto border-t border-emerald-200 p-3 text-xs text-slate-800"></pre>
       </details>
 
-      <p class="mt-4 text-sm text-slate-700">
-        This is the website's structured data. The next phase turns it into a real, previewable website.
-      </p>
+      <div class="mt-5">
+        <button id="download-site" type="button"
+                class="inline-flex min-h-[44px] cursor-pointer items-center gap-2 rounded-xl bg-brand-600 px-5 text-sm font-medium text-white transition-colors duration-200 hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60">
+          <i class="fa-solid fa-download" aria-hidden="true"></i> Download website (HTML file)
+        </button>
+        <p id="download-status" class="mt-2 text-sm text-slate-700" role="status"></p>
+        <p class="mt-2 text-sm text-slate-700">
+          Open the downloaded file in your browser to see the website. Live preview inside SiteForge comes next.
+        </p>
+      </div>
     </div>
 
     <!-- Error -->

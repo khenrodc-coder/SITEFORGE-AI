@@ -1,0 +1,20 @@
+{% set d = section.data %}
+<section id="{{ section.id }}" class="hero hero--{{ d.layout }}">
+  <div class="container">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <h1>{{ d.headline }}</h1>
+        <p class="lead">{{ d.subheadline }}</p>
+        <div class="actions">
+          <a class="btn btn--primary" href="#{{ d.primary_cta.target }}">{{ d.primary_cta.label }}</a>
+{% if d.secondary_cta.label %}
+          <a class="btn btn--ghost" href="#{{ d.secondary_cta.target }}">{{ d.secondary_cta.label }}</a>
+{% endif %}
+        </div>
+      </div>
+{% if d.layout != "minimal" %}
+      <div class="hero-media">{{ placeholder(section.id ~ "-main", d.image_alt) }}</div>
+{% endif %}
+    </div>
+  </div>
+</section>

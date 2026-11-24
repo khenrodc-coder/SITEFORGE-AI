@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="{{ meta.language }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ meta.site_name }}</title>
+  <meta name="description" content="{{ meta.tagline }}">
+  <meta name="theme-color" content="{{ theme.primary }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="{{ fonts_url }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+{% if inline %}
+  <style>
+{{ css }}
+  </style>
+{% else %}
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="js/main.js" defer></script>
+{% endif %}
+</head>
+<body data-style="{{ meta.design_style }}" data-mode="{{ theme.mode }}">
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  <header class="site-header">
+    <div class="container">
+      <a class="brand" href="#{{ section_ids[0] }}">{{ meta.site_name }}</a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+        <span class="bars" aria-hidden="true"></span>
+        <span class="sr-only">Menu</span>
+      </button>
+      <nav class="site-nav" id="site-nav" aria-label="Main">
+{% for item in nav_items %}
+        <a href="#{{ item.id }}">{{ item.nav_label }}</a>
+{% endfor %}
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+{% for section in sections %}
+{% include "sections/" ~ section.type ~ ".html" %}
+{% endfor %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="brand">{{ meta.site_name }}</p>
+          <p>{{ footer.tagline }}</p>
+        </div>
+        <nav class="footer-nav" aria-label="Footer">
+{% for item in nav_items %}
+          <a href="#{{ item.id }}">{{ item.nav_label }}</a>
+{% endfor %}
+        </nav>
+      </div>
+      <p class="copyright">&copy; {{ year }} {{ meta.site_name }}</p>
+    </div>
+  </footer>
+{% if inline %}
+  <script>
+{{ js }}
+  </script>
+{% endif %}
+</body>
+</html>

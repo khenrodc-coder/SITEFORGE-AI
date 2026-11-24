@@ -1,0 +1,8 @@
+{% macro head(section, title, intro) %}
+<div class="section-head">
+  <h2 id="{{ section.id }}-title">{{ title }}</h2>
+{% if intro %}
+  <p>{{ intro }}</p>
+{% endif %}
+</div>
+{% endmacro %}

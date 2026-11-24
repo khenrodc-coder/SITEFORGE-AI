@@ -1,0 +1,21 @@
+{% from "_macros.html" import head %}
+{% set d = section.data %}
+<section id="{{ section.id }}" class="section projects projects--{{ d.layout }}{% if section.alt %} section--alt{% endif %}" aria-labelledby="{{ section.id }}-title">
+  <div class="container">
+    {{ head(section, d.title, d.intro) }}
+    <ul class="cards">
+{% for item in d["items"] %}
+      <li class="card card--media">
+        {{ placeholder(section.id ~ "-" ~ loop.index, item.image_alt) }}
+        <div class="body">
+{% if item.category %}
+          <p class="eyebrow">{{ item.category }}</p>
+{% endif %}
+          <h3>{{ item.title }}</h3>
+          <p>{{ item.description }}</p>
+        </div>
+      </li>
+{% endfor %}
+    </ul>
+  </div>
+</section>

@@ -1,0 +1,27 @@
+{% from "_macros.html" import head %}
+{% set d = section.data %}
+<section id="{{ section.id }}" class="section{% if section.alt %} section--alt{% endif %}" aria-labelledby="{{ section.id }}-title">
+  <div class="container">
+    {{ head(section, d.title, d.intro) }}
+    <ul class="cards">
+{% for plan in d.plans %}
+      <li class="card plan{% if plan.highlighted %} plan--featured{% endif %}">
+{% if plan.highlighted %}
+        <span class="badge" style="align-self:flex-start;margin-bottom:.75rem">Most popular</span>
+{% endif %}
+        <h3>{{ plan.name }}</h3>
+{% if plan.description %}
+        <p>{{ plan.description }}</p>
+{% endif %}
+        <p class="amount">{{ plan.price }}{% if plan.period %} <small>/ {{ plan.period }}</small>{% endif %}</p>
+        <ul>
+{% for feature in plan.features %}
+          <li><i class="fa-solid fa-check" aria-hidden="true"></i><span>{{ feature }}</span></li>
+{% endfor %}
+        </ul>
+        <a class="btn {% if plan.highlighted %}btn--primary{% else %}btn--ghost{% endif %}" href="#{{ fallback_target }}">{{ plan.cta_label or "Get started" }}</a>
+      </li>
+{% endfor %}
+    </ul>
+  </div>
+</section>

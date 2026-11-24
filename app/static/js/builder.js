@@ -23,6 +23,7 @@
 
   var startController = null;   // cancels the request that starts a job
   var jobId = null;
+  var lastResult = null;
   var pollTimer = null;
   var pollFailures = 0;
   var elapsedTimer = null;
@@ -105,6 +106,8 @@
 
   /* ---------- result ---------- */
   function showResult(result) {
+    lastResult = result;
+    document.getElementById("download-status").textContent = "";
     var config = result.config;
     var meta = config.meta;
 
@@ -280,6 +283,48 @@
     }
   }
 
+  /* ---------- download ---------- */
+  function slugify(text) {
+    var slug = String(text).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    return slug.slice(0, 50) || "website";
+  }
+
+  function downloadWebsite() {
+    if (!lastResult) { return; }
+    var button = document.getElementById("download-site");
+    var status = document.getElementById("download-status");
+    button.disabled = true;
+    status.textContent = "Building your website file...";
+
+    fetch("/api/render", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ config: lastResult.config })
+    })
+      .then(function (response) {
+        return response.json()
+          .catch(function () { return {}; })
+          .then(function (data) { return { ok: response.ok, data: data }; });
+      })
+      .then(function (result) {
+        if (!result.ok) { throw new Error(result.data.message || "The website could not be built."); }
+        var blob = new Blob([result.data.html], { type: "text/html" });
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement("a");
+        link.href = url;
+        link.download = slugify(lastResult.config.meta.site_name) + ".html";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+        status.textContent = "Downloaded " + link.download;
+      })
+      .catch(function (error) {
+        status.textContent = error.message || "The website could not be built.";
+      })
+      .then(function () { button.disabled = false; });
+  }
+
   /* ---------- events ---------- */
   form.addEventListener("submit", function (event) {
     event.preventDefault();
@@ -301,6 +346,7 @@
 
   panel.querySelector('[data-action="cancel"]').addEventListener("click", cancel);
   panel.querySelector('[data-action="retry"]').addEventListener("click", generate);
+  document.getElementById("download-site").addEventListener("click", downloadWebsite);
 
   updateCounter();
   showState("idle");

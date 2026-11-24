@@ -1,0 +1,26 @@
+{% from "_macros.html" import head %}
+{% set d = section.data %}
+<section id="{{ section.id }}" class="section about about--{{ d.layout }}{% if section.alt %} section--alt{% endif %}" aria-labelledby="{{ section.id }}-title">
+  <div class="container">
+    <div class="{% if d.layout == 'split' %}split{% endif %}">
+      <div>
+        {{ head(section, d.title, "") }}
+        <div class="prose">
+{% for paragraph in d.body %}
+          <p>{{ paragraph }}</p>
+{% endfor %}
+        </div>
+{% if d.highlights %}
+        <ul class="chips">
+{% for item in d.highlights %}
+          <li>{{ item }}</li>
+{% endfor %}
+        </ul>
+{% endif %}
+      </div>
+{% if d.layout == "split" %}
+      <div>{{ placeholder(section.id ~ "-main", d.image_alt) }}</div>
+{% endif %}
+    </div>
+  </div>
+</section>

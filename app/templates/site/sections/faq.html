@@ -1,0 +1,15 @@
+{% from "_macros.html" import head %}
+{% set d = section.data %}
+<section id="{{ section.id }}" class="section{% if section.alt %} section--alt{% endif %}" aria-labelledby="{{ section.id }}-title">
+  <div class="container">
+    {{ head(section, d.title, "") }}
+    <div class="faq-list">
+{% for item in d["items"] %}
+      <details>
+        <summary>{{ item.question }}</summary>
+        <p>{{ item.answer }}</p>
+      </details>
+{% endfor %}
+    </div>
+  </div>
+</section>

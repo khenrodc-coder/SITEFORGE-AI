@@ -1,0 +1,21 @@
+{% from "_macros.html" import head %}
+{% set d = section.data %}
+<section id="{{ section.id }}" class="section team team--{{ d.layout }}{% if section.alt %} section--alt{% endif %}" aria-labelledby="{{ section.id }}-title">
+  <div class="container">
+    {{ head(section, d.title, d.intro) }}
+    <ul class="cards">
+{% for member in d.members %}
+      <li class="card">
+        <span class="avatar" aria-hidden="true">{{ member.name | initials }}</span>
+        <div>
+          <h3>{{ member.name }}</h3>
+          <p class="eyebrow" style="margin-top:.25rem">{{ member.role }}</p>
+{% if member.bio %}
+          <p>{{ member.bio }}</p>
+{% endif %}
+        </div>
+      </li>
+{% endfor %}
+    </ul>
+  </div>
+</section>

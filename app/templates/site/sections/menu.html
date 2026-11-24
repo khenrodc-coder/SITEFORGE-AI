@@ -1,0 +1,29 @@
+{% from "_macros.html" import head %}
+{% set d = section.data %}
+<section id="{{ section.id }}" class="section menu{% if section.alt %} section--alt{% endif %}" aria-labelledby="{{ section.id }}-title">
+  <div class="container">
+    {{ head(section, d.title, d.intro) }}
+    <div class="menu-grid">
+{% for category in d.categories %}
+      <div>
+        <h3>{{ category.name }}</h3>
+        <ul>
+{% for dish in category["items"] %}
+          <li class="menu-item">
+            <div>
+              <h4>{{ dish.name }}</h4>
+{% if dish.description %}
+              <p>{{ dish.description }}</p>
+{% endif %}
+            </div>
+{% if dish.price %}
+            <span class="price">{{ dish.price }}</span>
+{% endif %}
+          </li>
+{% endfor %}
+        </ul>
+      </div>
+{% endfor %}
+    </div>
+  </div>
+</section>

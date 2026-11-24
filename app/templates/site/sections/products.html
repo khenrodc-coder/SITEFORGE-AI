@@ -1,0 +1,31 @@
+{% from "_macros.html" import head %}
+{% set d = section.data %}
+<section id="{{ section.id }}" class="section{% if section.alt %} section--alt{% endif %}" aria-labelledby="{{ section.id }}-title">
+  <div class="container">
+    {{ head(section, d.title, d.intro) }}
+    <ul class="cards">
+{% for item in d["items"] %}
+      <li class="card card--media">
+        {{ placeholder(section.id ~ "-" ~ loop.index, item.image_alt or item.name) }}
+        <div class="body">
+{% if item.badge %}
+          <span class="badge">{{ item.badge }}</span>
+{% endif %}
+          <h3>{{ item.name }}</h3>
+{% if item.description %}
+          <p>{{ item.description }}</p>
+{% endif %}
+          <div class="product-row">
+{% if item.price %}
+            <span class="price">{{ item.price }}</span>
+{% endif %}
+{% if "contact" in section_ids %}
+            <a class="btn btn--ghost" href="#contact">Enquire<span class="sr-only"> about {{ item.name }}</span></a>
+{% endif %}
+          </div>
+        </div>
+      </li>
+{% endfor %}
+    </ul>
+  </div>
+</section>
