@@ -78,6 +78,7 @@ body[data-style="elegant"] .section-head h2::after {
 .actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.75rem; }
 
 .ph { width: 100%; height: auto; aspect-ratio: 4 / 3; border-radius: var(--radius-lg); }
+img.ph { object-fit: cover; }
 .icon {
   display: grid; place-items: center; width: 2.75rem; height: 2.75rem; margin-bottom: 1rem;
   border-radius: var(--radius); background: var(--primary-soft); color: var(--primary-text);

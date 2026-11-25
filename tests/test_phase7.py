@@ -58,7 +58,7 @@ class PreviewMarkupTests(unittest.TestCase):
 
     def test_scripts_load_in_order(self):
         order = [m.group(1) for m in re.finditer(r'src="/static/js/([a-z]+)\.js"', self.html)]
-        self.assertEqual(order, ["main", "builder", "preview"])
+        self.assertEqual(order, ["main", "builder", "preview", "editor"])
 
     def test_preview_only_on_builder_page(self):
         for path in ("/", "/dashboard"):
@@ -111,10 +111,23 @@ class PreviewScriptTests(unittest.TestCase):
             self.assertNotIn(banned, self.source)
 
     def test_content_goes_in_as_srcdoc_only(self):
-        self.assertIn("frame.srcdoc", self.source)
-        self.assertNotIn("frame.src =", self.source)
-        self.assertNotIn("contentWindow", self.source)
+        self.assertIn("next.srcdoc = result.data.html", self.source)
+        self.assertNotIn(".src =", self.source)
         self.assertNotIn("contentDocument", self.source)
+        self.assertNotIn("contentWindow.document", self.source)
+
+    def test_frames_created_by_the_script_are_sandboxed_the_same_way(self):
+        values = re.findall(r'setAttribute\("sandbox",\s*"([^"]*)"\)', self.source)
+        self.assertEqual(values, ["allow-scripts"])                     # every frame the script makes
+        code = re.sub(r"/\*.*?\*/", "", self.source, flags=re.S)       # ignore the explanatory comment
+        self.assertNotIn("allow-same-origin", code)
+        self.assertNotIn("allow-top-navigation", code)
+        self.assertIn('setAttribute("referrerpolicy", "no-referrer")', self.source)
+
+    def test_messages_are_only_trusted_from_our_own_frames(self):
+        self.assertIn("event.source === frame.contentWindow", self.source)
+        self.assertIn("event.source !== pendingFrame.contentWindow", self.source)
+        self.assertIn('typeof data.y === "number"', self.source)
 
     def test_all_three_devices_defined(self):
         for needle in ("width: 1280", "width: 768", "width: 375"):

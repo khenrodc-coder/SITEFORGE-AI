@@ -11,6 +11,7 @@ def create_app(config_name=None):
     """Build and configure the Flask application."""
     app = Flask(__name__)
     app.config.from_object(get_config(config_name))
+    app.json.sort_keys = False        # keep the order of fields; the editor shows them in this order
 
     app.extensions["job_manager"] = JobManager()
 

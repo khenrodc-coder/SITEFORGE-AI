@@ -105,6 +105,14 @@
   }
 
   /* ---------- result ---------- */
+  function showJson(config) {
+    // Pictures are long; leave them out of the readable view.
+    var text = JSON.stringify(config, function (key, value) {
+      return key === "image" && typeof value === "string" && value ? "[picture]" : value;
+    }, 2);
+    document.getElementById("result-json").textContent = text;
+  }
+
   function showResult(result) {
     lastResult = result;
     document.getElementById("download-status").textContent = "";
@@ -136,7 +144,7 @@
     });
     warningsBox.classList.toggle("hidden", warnings.length === 0);
 
-    document.getElementById("result-json").textContent = JSON.stringify(config, null, 2);
+    showJson(config);
 
     // The preview in Phase 7 listens for this event.
     document.dispatchEvent(new CustomEvent("siteforge:generated", { detail: result }));
@@ -201,6 +209,11 @@
   function generate() {
     clearErrors();
     stopPolling();
+
+    if (window.SiteForgeEditor && window.SiteForgeEditor.hasUnsavedChanges() &&
+        !window.confirm("Generating a new website replaces the one you have now, including your edits. Continue?")) {
+      return;
+    }
 
     var payload = {
       prompt: promptEl.value,
@@ -289,8 +302,14 @@
     return slug.slice(0, 50) || "website";
   }
 
+  function currentConfig() {
+    var edited = window.SiteForgeEditor && window.SiteForgeEditor.getConfig();
+    return edited || (lastResult && lastResult.config);
+  }
+
   function downloadWebsite() {
-    if (!lastResult) { return; }
+    var config = currentConfig();
+    if (!config) { return; }
     var button = document.getElementById("download-site");
     var status = document.getElementById("download-status");
     button.disabled = true;
@@ -299,7 +318,7 @@
     fetch("/api/render", {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({ config: lastResult.config })
+      body: JSON.stringify({ config: config, files: false })
     })
       .then(function (response) {
         return response.json()
@@ -312,12 +331,13 @@
         var url = URL.createObjectURL(blob);
         var link = document.createElement("a");
         link.href = url;
-        link.download = slugify(lastResult.config.meta.site_name) + ".html";
+        link.download = slugify(config.meta.site_name) + ".html";
         document.body.appendChild(link);
         link.click();
         link.remove();
         window.setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
         status.textContent = "Downloaded " + link.download;
+        if (window.SiteForgeEditor) { window.SiteForgeEditor.markExported(); }
       })
       .catch(function (error) {
         status.textContent = error.message || "The website could not be built.";
@@ -342,6 +362,14 @@
       clearErrors();
       promptEl.focus();
     });
+  });
+
+  document.addEventListener("siteforge:configchanged", function (event) {
+    if (event.detail && event.detail.config) {
+      showJson(event.detail.config);
+      document.getElementById("brief-name").textContent = event.detail.config.meta.site_name;
+      document.getElementById("brief-tagline").textContent = event.detail.config.meta.tagline;
+    }
   });
 
   panel.querySelector('[data-action="cancel"]').addEventListener("click", cancel);

@@ -185,7 +185,7 @@
         </button>
         <p id="download-status" class="mt-2 text-sm text-slate-700" role="status"></p>
         <p class="mt-2 text-sm text-slate-700">
-          The live preview below shows your website. Download it to open it in any browser.
+          The live preview below shows your website, and you can edit it there. Download it to open it in any browser.
         </p>
       </div>
     </div>
@@ -210,4 +210,5 @@
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/builder.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/preview.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/editor.js') }}" defer></script>
 {% endblock %}

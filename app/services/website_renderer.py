@@ -167,6 +167,15 @@ def placeholder(seed, alt=""):
     )
 
 
+def picture(seed, image="", alt=""):
+    """The user's uploaded picture if there is one, otherwise a generated stand-in."""
+    if image:
+        return Markup(
+            f'<img class="ph" src="{escape(image)}" alt="{escape(alt)}" loading="lazy" decoding="async">'
+        )
+    return placeholder(seed, alt)
+
+
 def initials(name):
     return "".join(word[0] for word in str(name).split()[:2]).upper()
 
@@ -184,17 +193,20 @@ def _environment():
         lstrip_blocks=True,
     )
     env.globals["placeholder"] = placeholder
+    env.globals["picture"] = picture
     env.filters["initials"] = initials
     env.filters["tel"] = tel_digits
     return env
 
 
 # ---------------------------------------------------------------- main entry point
-def render_website(config, year=None, preview=False):
+def render_website(config, year=None, preview=False, with_files=True):
     """Return {"files": {path: text}, "html": single_file_text} for a configuration.
 
     preview=True adds a base address that keeps in-page links working when the
-    page is shown inside the sandboxed preview frame. It only affects "html".
+    page is shown inside the sandboxed preview frame, plus a small script that lets
+    the preview keep its scroll position. It only affects "html".
+    with_files=False skips the separate files (they are not needed for a preview).
 
     Raises SchemaError when the configuration is not valid.
     """
@@ -230,13 +242,14 @@ def render_website(config, year=None, preview=False):
         "fonts_url": fonts_url(theme),
         "css": Markup(css),
         "js": Markup(js),
+        "bridge": Markup(_static_asset("preview-bridge.js")) if preview else "",
     }
     template = _environment().get_template("base.html")
-    return {
-        "files": {
+    result = {"html": template.render(inline=True, preview=preview, **context)}
+    if with_files:
+        result["files"] = {
             "index.html": template.render(inline=False, preview=False, **context),
             "css/styles.css": css,
             "js/main.js": js,
-        },
-        "html": template.render(inline=True, preview=preview, **context),
-    }
+        }
+    return result

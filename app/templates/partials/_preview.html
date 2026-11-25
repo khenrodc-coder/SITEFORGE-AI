@@ -1,4 +1,5 @@
 <section id="preview-section" class="mt-8 hidden" aria-labelledby="preview-title">
+  <div class="studio">
   <div id="preview-card" class="preview-card">
 
     <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3">
@@ -49,5 +50,32 @@
       <p id="preview-info" role="status">Desktop, 1280 px wide</p>
       <p>The preview is isolated from SiteForge. Email and phone links are switched off here.</p>
     </div>
+  </div>
+
+  <aside id="editor-panel" class="editor-panel" aria-labelledby="editor-title">
+    <div class="editor-head">
+      <h2 id="editor-title" class="font-display text-lg font-semibold">Customize</h2>
+      <button id="editor-discard" type="button" class="tool-btn tool-btn--sm">
+        <i class="fa-solid fa-rotate-left" aria-hidden="true"></i><span>Discard changes</span>
+      </button>
+    </div>
+
+    <div class="editor-tabs" role="tablist" aria-label="Customize">
+      <button id="tab-content" type="button" role="tab" class="tab-btn" aria-selected="true" aria-controls="panel-content">Content</button>
+      <button id="tab-design" type="button" role="tab" class="tab-btn" aria-selected="false" aria-controls="panel-design" tabindex="-1">Design</button>
+    </div>
+
+    <p id="editor-status" class="editor-status" role="status"></p>
+    <p id="editor-error" class="editor-error" role="alert"></p>
+
+    <div id="panel-content" role="tabpanel" aria-labelledby="tab-content" class="editor-body">
+      <div id="editor-site"></div>
+      <div id="editor-sections"></div>
+      <div id="editor-add"></div>
+    </div>
+    <div id="panel-design" role="tabpanel" aria-labelledby="tab-design" class="editor-body" hidden>
+      <div id="editor-design"></div>
+    </div>
+  </aside>
   </div>
 </section>

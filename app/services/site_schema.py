@@ -12,6 +12,8 @@ goes through this module, which:
 
 The renderer (Phase 6) can therefore trust whatever this module returns.
 """
+import base64
+import binascii
 import json
 import re
 
@@ -20,6 +22,8 @@ from app.services.design_options import (
     RADII,
     THEME_MODES,
     color_scheme_ids,
+    get_color_schemes,
+    get_design_styles,
     style_ids,
 )
 from app.services.template_catalog import get_category
@@ -35,6 +39,17 @@ ICONS = (
     "rocket", "award", "check", "hammer", "graduation-cap", "handshake", "book-open",
 )
 DEFAULT_ICON = "star"
+
+# Uploaded pictures are stored inside the configuration as data addresses.
+IMAGE_MAX_CHARS = 700_000            # per picture (about 500 KB of image data)
+TOTAL_IMAGE_MAX_CHARS = 8_000_000    # all pictures of one website together
+_IMAGE_TYPES = ("png", "jpeg", "webp", "gif")        # SVG is left out on purpose: it can contain scripts
+_IMAGE_SIGNATURES = {
+    "png": lambda head: head.startswith(b"\x89PNG\r\n\x1a\n"),
+    "jpeg": lambda head: head.startswith(b"\xff\xd8\xff"),
+    "gif": lambda head: head[:6] in (b"GIF87a", b"GIF89a"),
+    "webp": lambda head: head[:4] == b"RIFF" and head[8:12] == b"WEBP",
+}
 
 
 class SchemaError(ValueError):
@@ -66,6 +81,30 @@ def clean_text(value, max_length):
     return text
 
 
+def clean_image(value):
+    """Return the picture if it is a genuine PNG, JPEG, WebP, or GIF data address, otherwise ""."""
+    if not isinstance(value, str) or len(value) > IMAGE_MAX_CHARS:
+        return ""
+    for kind in _IMAGE_TYPES:
+        prefix = f"data:image/{kind};base64,"
+        if value.startswith(prefix):
+            try:
+                raw = base64.b64decode(value[len(prefix):], validate=True)
+            except (binascii.Error, ValueError):
+                return ""
+            return value if _IMAGE_SIGNATURES[kind](raw[:16]) else ""
+    return ""
+
+
+def _image_chars(value):
+    """Total length of all pictures stored anywhere inside `value`."""
+    if isinstance(value, dict):
+        return sum(len(v) if key == "image" and isinstance(v, str) else _image_chars(v) for key, v in value.items())
+    if isinstance(value, list):
+        return sum(_image_chars(item) for item in value)
+    return 0
+
+
 # ---------------------------------------------------------------- field builders
 def text(max_length, required=True):
     return {"kind": "text", "max": max_length, "required": required}
@@ -92,6 +131,7 @@ EMAIL = {"kind": "email"}
 PHONE = {"kind": "phone"}
 PRICE = {"kind": "price"}
 TARGET = {"kind": "target"}
+IMAGE = {"kind": "image"}
 
 # ---------------------------------------------------------------- section types
 SECTION_SPECS = {
@@ -104,6 +144,7 @@ SECTION_SPECS = {
             "subheadline": text(220),
             "primary_cta": obj(label=text(30), target=TARGET),
             "secondary_cta": obj(label=text(30, required=False), target=TARGET),
+            "image": IMAGE,
             "image_alt": text(120, required=False),
         },
     },
@@ -115,6 +156,7 @@ SECTION_SPECS = {
             "title": text(60),
             "body": items(text(400), 1, 3),
             "highlights": items(text(60), 0, 4),
+            "image": IMAGE,
             "image_alt": text(120, required=False),
         },
     },
@@ -146,7 +188,7 @@ SECTION_SPECS = {
         "fields": {
             "title": text(60),
             "intro": text(200, required=False),
-            "items": items(obj(caption=text(80), image_alt=text(120, required=False)), 3, 8),
+            "items": items(obj(caption=text(80), image=IMAGE, image_alt=text(120, required=False)), 3, 8),
         },
     },
     "projects": {
@@ -158,7 +200,7 @@ SECTION_SPECS = {
             "intro": text(200, required=False),
             "items": items(obj(
                 title=text(60), category=text(40, required=False),
-                description=text(200), image_alt=text(120, required=False),
+                description=text(200), image=IMAGE, image_alt=text(120, required=False),
             ), 3, 6),
         },
     },
@@ -170,7 +212,7 @@ SECTION_SPECS = {
             "intro": text(200, required=False),
             "items": items(obj(
                 name=text(60), description=text(140, required=False), price=PRICE,
-                badge=text(20, required=False), image_alt=text(120, required=False),
+                badge=text(20, required=False), image=IMAGE, image_alt=text(120, required=False),
             ), 3, 8),
         },
     },
@@ -295,6 +337,9 @@ def _clean(spec, value, path, context, problems):
     if kind == "price":
         return clean_text(value, 16)
 
+    if kind == "image":
+        return clean_image(value)
+
     if kind == "target":
         cleaned = clean_text(value, 40).lstrip("#")
         return cleaned if cleaned in context["targets"] else context["fallback"]
@@ -367,7 +412,8 @@ def describe_shape(section_type, targets):
         if kind == "target":
             return "one of: " + ", ".join(sorted(targets))
         if kind == "object":
-            return {name: walk(sub, f"{path}.{name}" if path else name) for name, sub in spec["fields"].items()}
+            return {name: walk(sub, f"{path}.{name}" if path else name)
+                    for name, sub in spec["fields"].items() if sub["kind"] != "image"}
         if kind == "list":
             notes.append(f'"{path}": {spec["min"]} to {spec["max"]} entries')
             return [walk(spec["item"], path)]
@@ -495,9 +541,48 @@ def validate_site_config(raw):
             "data": data,
         })
 
+    image_total = sum(_image_chars(section["data"]) for section in sections)
+    if image_total > TOTAL_IMAGE_MAX_CHARS:
+        problems.append("the pictures are too large in total; remove or shrink some")
+
     footer_source = raw.get("footer") if isinstance(raw.get("footer"), dict) else {}
     footer = {"tagline": clean_text(footer_source.get("tagline"), 140) or meta["tagline"]}
 
     if problems:
         raise SchemaError(problems)
     return {"version": CONFIG_VERSION, "meta": meta, "theme": theme, "sections": sections, "footer": footer}
+
+
+# ---------------------------------------------------------------- export for the editor
+def _plain(value):
+    """Turn tuples into lists so the structure can be sent as JSON."""
+    if isinstance(value, dict):
+        return {key: _plain(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_plain(item) for item in value]
+    return value
+
+
+def export_schema():
+    """Everything the editor needs to build its forms, as plain JSON-ready data."""
+    return {
+        "version": CONFIG_VERSION,
+        "sections": {
+            name: {"label": spec["label"], "nav": spec["nav"], "purpose": spec["purpose"],
+                   "fields": _plain(spec["fields"])}
+            for name, spec in SECTION_SPECS.items()
+        },
+        "icons": list(ICONS),
+        "fonts": list(FONTS),
+        "radii": list(RADII),
+        "modes": list(THEME_MODES),
+        "styles": [{key: item[key] for key in ("id", "name", "font_heading", "font_body", "radius")}
+                   for item in get_design_styles()],
+        "color_schemes": get_color_schemes(),
+        "limits": {
+            "min_sections": MIN_SECTIONS,
+            "max_sections": MAX_SECTIONS,
+            "image_max_chars": IMAGE_MAX_CHARS,
+            "total_image_max_chars": TOTAL_IMAGE_MAX_CHARS,
+        },
+    }

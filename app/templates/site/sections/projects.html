@@ -6,7 +6,7 @@
     <ul class="cards">
 {% for item in d["items"] %}
       <li class="card card--media">
-        {{ placeholder(section.id ~ "-" ~ loop.index, item.image_alt) }}
+        {{ picture(section.id ~ "-" ~ loop.index, item.image, item.image_alt) }}
         <div class="body">
 {% if item.category %}
           <p class="eyebrow">{{ item.category }}</p>

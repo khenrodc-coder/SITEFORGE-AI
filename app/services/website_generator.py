@@ -89,6 +89,58 @@ def write_section(client, section_type, brief, request_data, targets, attempts=S
     raise SectionFailedError(last_problem)
 
 
+def carry_over_images(old, new):
+    """Copy the user's uploaded pictures from the old section data into the new data.
+
+    Pictures stay at the same place: the same field, or the same position in a list.
+    """
+    if isinstance(old, dict) and isinstance(new, dict):
+        for key, value in new.items():
+            if key == "image":
+                if old.get("image"):
+                    new["image"] = old["image"]
+            elif key in old:
+                carry_over_images(old[key], value)
+    elif isinstance(old, list) and isinstance(new, list):
+        for old_item, new_item in zip(old, new):
+            carry_over_images(old_item, new_item)
+    return new
+
+
+def write_single_section(client, config, section_type, hint="", job=None):
+    """Write (or rewrite) one section of an existing website.
+
+    `config` must already be validated. Returns {"type", "data"}.
+    """
+    meta = config["meta"]
+    category = get_category(meta["category"])
+    brief = {"site_name": meta["site_name"], "tagline": meta["tagline"], "category_name": category["name"]}
+
+    description = meta["prompt"] or meta["tagline"]
+    if hint:
+        description += "\nExtra instruction for the " + section_type + " section: " + hint
+    request_data = {"prompt": description, "design_style": meta["design_style"],
+                    "color_scheme": meta["color_scheme"], "category": category["id"]}
+
+    existing = next((s for s in config["sections"] if s["type"] == section_type), None)
+    targets = {s["id"] for s in config["sections"]} | {section_type}
+
+    if job:
+        job.set_progress(0, 1, f"Writing the {SECTION_SPECS[section_type]['label'].lower()} section")
+        job.check_cancelled()
+    try:
+        data = write_section(client, section_type, brief, request_data, targets)
+    except SectionFailedError as exc:
+        raise OllamaResponseError("The model could not write this section correctly. Please try again.") from exc
+    if job:
+        job.set_progress(1, 1, "Done")
+        job.check_cancelled()
+
+    if existing:
+        carry_over_images(existing["data"], data)
+    return {"type": section_type, "data": data}
+
+
 def build_theme(request_data):
     style = get_style(request_data["design_style"])
     scheme = get_color_scheme(request_data["color_scheme"])
@@ -177,4 +229,5 @@ def generate_website(client, request_data, job=None):
     return {"config": configuration, "warnings": warnings, "model": client.model}
 
 
-__all__ = ["generate_website", "write_section", "SectionFailedError", "OllamaError"]
+__all__ = ["generate_website", "write_section", "write_single_section", "carry_over_images",
+           "SectionFailedError", "OllamaError"]
