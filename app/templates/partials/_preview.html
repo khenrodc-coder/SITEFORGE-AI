@@ -1,4 +1,24 @@
 <section id="preview-section" class="mt-8 hidden" aria-labelledby="preview-title">
+  <div id="project-bar" class="project-bar">
+    <div class="field">
+      <label for="project-name">Project name</label>
+      <input id="project-name" type="text" maxlength="150" autocomplete="off">
+    </div>
+    <div class="project-bar-actions">
+      <button id="project-save" type="button" class="tool-btn tool-btn--primary">
+        <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i><span>Save project</span>
+      </button>
+      <button id="project-download" type="button" class="tool-btn">
+        <i class="fa-solid fa-download" aria-hidden="true"></i><span>Download</span>
+      </button>
+      <a id="project-list-link" class="tool-btn" href="{{ url_for('main.dashboard') }}#projects">
+        <i class="fa-solid fa-folder-open" aria-hidden="true"></i><span>All projects</span>
+      </a>
+    </div>
+    <p id="project-status" class="project-note" role="status">Not saved yet.</p>
+    <p id="project-error" class="editor-error" role="alert"></p>
+  </div>
+
   <div class="studio">
   <div id="preview-card" class="preview-card">
 

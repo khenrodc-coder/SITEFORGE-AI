@@ -492,13 +492,13 @@ class GenerateApiTests(unittest.TestCase):
         response = self.client.post("/api/generate", json=REQUEST)
         self.assertEqual(response.status_code, 409)
         self.assertEqual(response.get_json()["error"], "generation_busy")
-        self.client.post(f"/api/generate/{first}/cancel")
+        self.client.post(f"/api/generate/{first}/cancel", headers={"X-SiteForge-Request": "1"})
         self.wait_for(first)
 
     def test_cancel_endpoint(self):
         self.fake.delay = 0.3
         job_id = self.start()
-        response = self.client.post(f"/api/generate/{job_id}/cancel")
+        response = self.client.post(f"/api/generate/{job_id}/cancel", headers={"X-SiteForge-Request": "1"})
         self.assertEqual(response.status_code, 200)
         self.assertIn(response.get_json()["status"], ("cancelling", "cancelled"))
         self.assertEqual(self.wait_for(job_id)["status"], "cancelled")
@@ -506,7 +506,7 @@ class GenerateApiTests(unittest.TestCase):
     def test_unknown_job(self):
         self.assertEqual(self.client.get("/api/generate/" + "0" * 32).status_code, 404)
         self.assertEqual(self.client.get("/api/generate/not-a-real-id").status_code, 404)
-        self.assertEqual(self.client.post("/api/generate/" + "0" * 32 + "/cancel").status_code, 404)
+        self.assertEqual(self.client.post("/api/generate/" + "0" * 32 + "/cancel", headers={"X-SiteForge-Request": "1"}).status_code, 404)
 
     def test_cancel_requires_post(self):
         self.assertEqual(self.client.get("/api/generate/" + "0" * 32 + "/cancel").status_code, 405)

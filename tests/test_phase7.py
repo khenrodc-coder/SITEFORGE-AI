@@ -58,7 +58,7 @@ class PreviewMarkupTests(unittest.TestCase):
 
     def test_scripts_load_in_order(self):
         order = [m.group(1) for m in re.finditer(r'src="/static/js/([a-z]+)\.js"', self.html)]
-        self.assertEqual(order, ["main", "builder", "preview", "editor"])
+        self.assertEqual(order, ["main", "builder", "preview", "editor", "projects"])
 
     def test_preview_only_on_builder_page(self):
         for path in ("/", "/dashboard"):

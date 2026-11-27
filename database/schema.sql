@@ -1,5 +1,15 @@
 -- SiteForge AI database schema (MySQL 8+).
--- Run once in MySQL Workbench or the mysql command line. It is connected to the app in Phase 9.
+-- Run once in MySQL Workbench or the mysql command line. It is safe to run again.
+--
+-- After running it, create a dedicated account for SiteForge (do not use root).
+-- Replace the password, then put the same values in your .env file:
+--
+--   CREATE USER 'siteforge'@'localhost' IDENTIFIED BY 'choose-a-strong-password';
+--   GRANT SELECT, INSERT, UPDATE, DELETE ON siteforge_ai.* TO 'siteforge'@'localhost';
+--   FLUSH PRIVILEGES;
+--
+-- Websites with pictures can be several megabytes. MySQL 8 accepts 64 MB by default
+-- (max_allowed_packet), which is plenty.
 
 CREATE DATABASE IF NOT EXISTS siteforge_ai
   CHARACTER SET utf8mb4
@@ -48,6 +58,7 @@ CREATE TABLE IF NOT EXISTS generated_websites (
   created_at    TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   UNIQUE KEY uq_generated_project_version (project_id, version),
+  KEY idx_generated_created (created_at),
   CONSTRAINT fk_generated_project FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 

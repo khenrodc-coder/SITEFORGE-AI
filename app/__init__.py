@@ -3,6 +3,8 @@ from datetime import datetime
 
 from flask import Flask, jsonify, render_template, request
 
+from app.routes.guards import ApiError, handle_api_error
+from app.services.database import build_database
 from app.services.job_manager import JobManager
 from config import get_config
 
@@ -14,6 +16,8 @@ def create_app(config_name=None):
     app.json.sort_keys = False        # keep the order of fields; the editor shows them in this order
 
     app.extensions["job_manager"] = JobManager()
+    app.extensions["database"] = build_database(app.config)
+    app.register_error_handler(ApiError, handle_api_error)
 
     # Make sure the export folder exists.
     app.config["GENERATED_WEBSITES_DIR"].mkdir(parents=True, exist_ok=True)

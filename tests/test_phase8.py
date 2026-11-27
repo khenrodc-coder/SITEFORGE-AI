@@ -399,13 +399,13 @@ class SectionWriteApiTests(unittest.TestCase):
         first = self.post(type="faq")
         self.assertEqual(first.status_code, 202)
         self.assertEqual(self.post(type="team").status_code, 409)
-        self.client.post(f"/api/generate/{first.get_json()['job_id']}/cancel")
+        self.client.post(f"/api/generate/{first.get_json()['job_id']}/cancel", headers={"X-SiteForge-Request": "1"})
         self.wait_for(first.get_json()["job_id"])
 
     def test_cancel(self):
         self.fake.delay = 0.4
         job_id = self.post(type="faq").get_json()["job_id"]
-        self.client.post(f"/api/generate/{job_id}/cancel")
+        self.client.post(f"/api/generate/{job_id}/cancel", headers={"X-SiteForge-Request": "1"})
         self.assertEqual(self.wait_for(job_id)["status"], "cancelled")
 
     def test_the_website_sent_is_not_changed_or_stored(self):

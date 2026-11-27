@@ -534,7 +534,7 @@
     var failures = 0;
 
     function cancelJob(id) {
-      fetch("/api/generate/" + encodeURIComponent(id) + "/cancel", { method: "POST" }).catch(function () {});
+      fetch("/api/generate/" + encodeURIComponent(id) + "/cancel", { method: "POST", headers: { "X-SiteForge-Request": "1" } }).catch(function () {});
     }
     function finish() {
       window.clearTimeout(timer);

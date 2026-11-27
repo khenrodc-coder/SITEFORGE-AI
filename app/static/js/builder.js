@@ -289,7 +289,7 @@
       setLoading(false);
       showState("idle");
       statusLine.textContent = "Generation cancelled.";
-      fetch("/api/generate/" + encodeURIComponent(id) + "/cancel", { method: "POST" })
+      fetch("/api/generate/" + encodeURIComponent(id) + "/cancel", { method: "POST", headers: { "X-SiteForge-Request": "1" } })
         .catch(function () { /* the job stops on its own at the next step */ });
     } else if (startController) {
       startController.abort();
@@ -307,11 +307,9 @@
     return edited || (lastResult && lastResult.config);
   }
 
-  function downloadWebsite() {
+  function downloadWebsite(button, status) {
     var config = currentConfig();
     if (!config) { return; }
-    var button = document.getElementById("download-site");
-    var status = document.getElementById("download-status");
     button.disabled = true;
     status.textContent = "Building your website file...";
 
@@ -374,7 +372,10 @@
 
   panel.querySelector('[data-action="cancel"]').addEventListener("click", cancel);
   panel.querySelector('[data-action="retry"]').addEventListener("click", generate);
-  document.getElementById("download-site").addEventListener("click", downloadWebsite);
+  document.getElementById("download-site").addEventListener("click", function () {
+    downloadWebsite(document.getElementById("download-site"), document.getElementById("download-status"));
+  });
+  window.SiteForgeBuilder = { download: downloadWebsite };
 
   updateCounter();
   showState("idle");

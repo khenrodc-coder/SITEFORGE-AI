@@ -4,6 +4,7 @@
 {% block content %}
 <h1 class="font-display text-3xl font-bold tracking-tight">New project</h1>
 <p class="mt-1 text-slate-600">Describe the website you want, choose how it should look, and generate it.</p>
+<p id="project-open-message" class="project-open-message" role="alert"></p>
 
 <div class="mt-8 grid gap-8 xl:grid-cols-5">
 
@@ -211,4 +212,5 @@
 <script src="{{ url_for('static', filename='js/builder.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/preview.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/editor.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/projects.js') }}" defer></script>
 {% endblock %}

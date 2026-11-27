@@ -4,6 +4,7 @@ import os
 from flask import Blueprint, current_app, jsonify, request
 
 from app.services.generation_request import validate_generation_request
+from app.routes.guards import LARGE_REQUEST_LIMIT, require_same_site_request
 from app.services.job_manager import JobBusyError
 from app.services.ollama_service import OllamaError, client_from_config
 from app.services.site_schema import (
@@ -19,8 +20,8 @@ from app.services.website_renderer import render_website
 
 api_bp = Blueprint("api", __name__, url_prefix="/api")
 
-# Websites that contain uploaded pictures are larger than the normal 1 MB request limit.
-LARGE_REQUEST_LIMIT = 12 * 1024 * 1024
+api_bp.before_request(require_same_site_request)
+
 HINT_MAX_LENGTH = 200
 
 

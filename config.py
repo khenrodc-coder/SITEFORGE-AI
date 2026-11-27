@@ -36,6 +36,10 @@ class Config:
     MYSQL_USER = os.environ.get("MYSQL_USER", "root")
     MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD", "")
     MYSQL_DATABASE = os.environ.get("MYSQL_DATABASE", "siteforge_ai")
+    DB_POOL_SIZE = int(os.environ.get("DB_POOL_SIZE", "5"))
+    DB_CONNECT_TIMEOUT = int(os.environ.get("DB_CONNECT_TIMEOUT", "5"))
+    # Set DATABASE_ENABLED=0 to run without saving projects.
+    DATABASE_ENABLED = os.environ.get("DATABASE_ENABLED", "1").strip().lower() not in ("0", "false", "no", "off")
 
     # Ollama (connected in Phase 4).
     OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
@@ -53,6 +57,8 @@ class TestingConfig(Config):
     # Tests must never reach a real Ollama. Port 9 is closed on normal machines.
     OLLAMA_BASE_URL = "http://127.0.0.1:9"
     OLLAMA_TIMEOUT = 2
+    # Tests must never touch a real database either.
+    DATABASE_ENABLED = False
 
 
 class ProductionConfig(Config):
