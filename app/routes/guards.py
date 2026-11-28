@@ -36,16 +36,18 @@ def require_same_site_request():
     if request.is_json or request.headers.get("X-SiteForge-Request") == "1":
         return None
     if request.content_length:
-        raise ApiError(415, "unsupported_media_type", "Send the request as JSON.")
+        raise ApiError(415, "unsupported_media_type",
+                       "Send the request as JSON.")
     raise ApiError(403, "forbidden", "This request was not allowed.")
 
 
 def read_json_object():
     """The JSON body as a dict. Allows the larger limit used for websites with pictures."""
-    request.max_content_length = LARGE_REQUEST_LIMIT
     if not request.is_json:
-        raise ApiError(415, "unsupported_media_type", "Send the request as JSON.")
+        raise ApiError(415, "unsupported_media_type",
+                       "Send the request as JSON.")
     body = request.get_json(silent=True)
     if not isinstance(body, dict):
-        raise ApiError(400, "validation_failed", "The request must be a JSON object.")
+        raise ApiError(400, "validation_failed",
+                       "The request must be a JSON object.")
     return body

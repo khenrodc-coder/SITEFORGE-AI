@@ -125,7 +125,6 @@ def render():
     The configuration is validated first, so only safe, known data is rendered.
     Send "files": false to skip the separate files when only the page is needed.
     """
-    request.max_content_length = LARGE_REQUEST_LIMIT
     if not request.is_json:
         return jsonify({"error": "unsupported_media_type",
                         "message": "Send the request as JSON."}), 415
@@ -135,7 +134,8 @@ def render():
     preview = isinstance(body, dict) and body.get("preview") is True
     with_files = not (isinstance(body, dict) and body.get("files") is False)
     try:
-        rendered = render_website(config, preview=preview, with_files=with_files)
+        rendered = render_website(
+            config, preview=preview, with_files=with_files)
     except SchemaError as exc:
         return jsonify({"error": "invalid_configuration",
                         "message": "The website data is not valid.",
@@ -155,7 +155,6 @@ def write_section_endpoint():
 
     Runs as a background job like a full generation. Poll /api/generate/<job_id>.
     """
-    request.max_content_length = LARGE_REQUEST_LIMIT
     if not request.is_json:
         return jsonify({"error": "unsupported_media_type",
                         "message": "Send the request as JSON."}), 415
@@ -176,7 +175,8 @@ def write_section_endpoint():
                         "message": "The website has problems that must be fixed first.",
                         "problems": exc.problems[:10]}), 400
 
-    exists = any(section["type"] == section_type for section in config["sections"])
+    exists = any(section["type"] ==
+                 section_type for section in config["sections"])
     if not exists and len(config["sections"]) >= MAX_SECTIONS:
         return jsonify({"error": "validation_failed",
                         "message": f"A website can have at most {MAX_SECTIONS} sections."}), 400
